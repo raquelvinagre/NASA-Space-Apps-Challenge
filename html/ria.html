@@ -14,8 +14,12 @@
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
 	<!-- Bootstrap Icons (optional) -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+	<!-- Leaflet CSS -->
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<!-- Google Font -->
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
@@ -31,7 +35,7 @@
 		body {
 			height: 100%;
 			margin: 0;
-			font-family: 'Arial', sans-serif;
+			font-family: 'Poppins', sans-serif;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
@@ -45,6 +49,15 @@
 			color: #333;
 			text-align: center;
 			margin-top: 80px;
+		}
+
+		#map-container {
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+			width: 100%;
+			max-width: 1200px;
+			padding: 20px;
 		}
 
 		#map {
@@ -98,71 +111,32 @@
 			margin: 10px 0;
 			padding: 10px;
 			display: flex;
-			align-items: center;
+			align-items: flex-start;
 			justify-content: center;
 		}
 
-		/* The switch - the box around the slider */
-		.switch {
-			position: relative;
-			display: inline-block;
-			width: 60px;
-			height: 34px;
-			margin: 0 10px;
-		}
-
-		/* Hide default HTML checkbox */
-		.switch input {
-			opacity: 0;
-			width: 0;
-			height: 0;
-		}
-
-		/* The slider */
-		.slider {
-			position: absolute;
-			cursor: pointer;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background-color: #ccc;
-			-webkit-transition: .4s;
-			transition: .4s;
-			border-radius: 34px;
-		}
-
-		.slider:before {
-			position: absolute;
-			content: "";
-			height: 26px;
-			width: 26px;
-			left: 4px;
-			bottom: 4px;
-			background-color: white;
-			-webkit-transition: .4s;
-			transition: .4s;
-			border-radius: 50%;
-		}
-
-		input:checked+.slider {
-			background-color: #0d6efd;
-		}
-
-		input:focus+.slider {
-			box-shadow: 0 0 1px #0d6efd;
-		}
-
-		input:checked+.slider:before {
-			-webkit-transform: translateX(26px);
-			-ms-transform: translateX(26px);
-			transform: translateX(26px);
+		#filter-container {
+			margin-left: 20px;
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
 		}
 
 		@media (max-width: 768px) {
+			#map-container {
+				flex-direction: column;
+				align-items: center;
+			}
+
 			#map {
 				width: 100%;
 				height: 400px;
+			}
+
+			#filter-container {
+				margin-left: 0;
+				margin-top: 10px;
+				align-items: center;
 			}
 
 			h1 {
@@ -196,54 +170,74 @@
 
 	<h1>Saline Intrusion Risk Zones in Baixo Vouga Lagunar, Aveiro</h1>
 
-	<div id='map'></div>
+	<div id="map-container">
+		<!-- Map container -->
+		<div id="map"></div>
+
+		<!-- Filter button container -->
+		<div id="filter-container">
+			<div class="prop">
+				<div class="btn-group">
+					<button type="button" class="btn btn-primary text-white dropdown-toggle" data-bs-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false">
+						Select Indice
+					</button>
+					<div class="dropdown-menu">
+						<a class="dropdown-item" href="#" onclick="updateProp('NDVI')">NDVI</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('NDWI')">NDWI</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('EVI')">EVI</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 	<script type="text/javascript">
 		var geojson;
 		var propToDisplay = 'NDVI';
-	
+
 		// Define the bounding box coordinates
 		const boundingBox = {
-			south: 40.69313,
+			south: 40.67313,
 			north: 40.751945,
 			west: -8.631083,
-			east: -8.60555
+			east: -8.58055
 		};
-	
+
 		// Calculate the center of the bounding box
 		const center = [
 			(boundingBox.north + boundingBox.south) / 2,
 			(boundingBox.east + boundingBox.west) / 2
 		];
-	
+
 		// Calculate the zoom level based on the bounding box
 		const zoom = 14;
-	
+
 		fetch('/ria.json').then(blob => blob.json()).then(data => plot(data));
-	
+
 		const map = L.map('map').setView(center, zoom);
-	
+
 		const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 19,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		}).addTo(map);
-	
+
 		// control that shows state info on hover
 		const info = L.control();
-	
+
 		info.onAdd = function (map) {
 			this._div = L.DomUtil.create('div', 'info');
 			this.update();
 			return this._div;
 		};
-	
+
 		info.update = function (props) {
 			const contents = props ? `<b>${props.localId}</b><br />${propToDisplay}: ${props[propToDisplay].toFixed(4)}` : 'Hover over a canal';
 			this._div.innerHTML = `<h4>${propToDisplay}</h4>${contents}`;
 		};
-	
+
 		info.addTo(map);
-	
+
 		// get color depending on the value
 		function getColor(d) {
 			return d > 0.2 ? '#FCE51E' :
@@ -253,7 +247,7 @@
 							d > 0.02 ? '#2D3E78' :
 								d > 0.01 ? '#37125E' : '#1C161E';
 		}
-	
+
 		function style(feature) {
 			return {
 				weight: 2,
@@ -264,22 +258,22 @@
 				fillColor: getColor(feature.properties[propToDisplay])
 			};
 		}
-	
+
 		function highlightFeature(e) {
 			const layer = e.target;
-	
+
 			layer.setStyle({
 				weight: 5,
 				color: '#666',
 				dashArray: '',
 				fillOpacity: 0.7
 			});
-	
+
 			layer.bringToFront();
-	
+
 			info.update(layer.feature.properties);
 		}
-	
+
 		function plot(riaData) {
 			geojson = L.geoJson(riaData, {
 				style: style,
@@ -290,47 +284,37 @@
 					});
 				}
 			}).addTo(map);
-	
+
 			const legend = L.control({ position: 'bottomright' });
-	
+
 			legend.onAdd = function (map) {
 				const div = L.DomUtil.create('div', 'info legend'),
 					grades = [0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2],
 					labels = [];
-	
+
 				// loop through our density intervals and generate a label with a colored square for each interval
 				for (let i = 0; i < grades.length; i++) {
 					div.innerHTML +=
 						'<i style="background:' + getColor(grades[i] + 0.01) + '"></i> ' +
 						grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
 				}
-	
+
 				return div;
 			};
-	
+
 			legend.addTo(map);
 		}
-	
+
 		function resetHighlight(e) {
 			geojson.resetStyle(e.target);
 			info.update();
 		}
-	
-		function updateProp(index) {
-			propToDisplay = index;
+
+		function updateProp(property) {
+			propToDisplay = property;
 			geojson.setStyle(style);
 		}
 	</script>
-	
-
-	<div class="prop">
-		<label>NDVI</label>
-		<label class="switch">
-			<input type="checkbox" onclick="updateProp()">
-			<span class="slider"></span>
-		</label>
-		<label>NDWI</label>
-	</div>
 
 	<!-- Bootstrap JS and Popper.js -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
