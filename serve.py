@@ -8,6 +8,7 @@ import openeo  # for processing/retrieving data from Copernicus
 import xarray  # for reading netCDF data
 import geopandas as gpd  # for working with shapefiles and GeoJSON
 import numpy as np
+import json
 
 from os.path import isfile
 
@@ -100,7 +101,7 @@ def get_spectral_indices(ds, shapefile, reproject=True):
 
     # Read the shapefile and check the CRS
     geo = gpd.read_file(shapefile)
-    geo = geo[["ID", "geometry"]]
+    geo = geo[["Id", "geometry"]]
 
     # Reproject the shapefile to match the CRS of gdf (which is EPSG:4326)
     if geo.crs != gdf.crs:
@@ -108,16 +109,17 @@ def get_spectral_indices(ds, shapefile, reproject=True):
 
     # Aggregate indices per zones in the shapefile
     indices = (
-        geo.sjoin(gdf, predicate="contains")[["ID", "NDVI", "NDWI", "NDSI", "SI9"]]
-        .groupby("ID")
+        geo.sjoin(gdf, predicate="contains")[["Id", "NDVI", "NDWI", "NDSI", "SI9"]]
+        .groupby("Id")
         .agg("mean")
     )
 
+    print(indices)
     # Join the results back to the original shapefile GeoDataFrame
-    indices = geo.join(indices, on="ID")
+    indices = geo.join(indices, on="Id")
+
 
     return indices.to_geo_dict()
-
 
 
 @app.get("/ria.json")
@@ -146,9 +148,9 @@ async def get_ndvi_nwdi():
 
     ds = xarray.load_dataset("data/eo_data.nc", decode_coords="all")
 
-    out = get_spectral_indices(ds, "bvl/areaEstudo.shp")
+    out = get_spectral_indices(ds, "areas/divisoes.shp")
     #out = get_spectral_indices(ds, "RiaAveiro_WGS84/RiaAveiro_WGS84.shp")
-
+    print(out)
     return out
 
 

@@ -6,7 +6,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Aveiro Space Week - App Dev</title>
+	<title>Community Mapping</title>
 
 	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
 
@@ -66,7 +66,7 @@
 			max-width: 100%;
 			border-radius: 10px;
 			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-			margin-bottom: 20px;
+			margin-bottom: 10px;
 		}
 
 		.leaflet-container {
@@ -122,6 +122,15 @@
 			align-items: flex-start;
 		}
 
+		.info-card {
+			margin-top: 130px;
+			width: 300px;
+			padding: 20px;
+			background: white;
+			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+			border-radius: 10px;
+		}
+
 		@media (max-width: 768px) {
 			#map-container {
 				flex-direction: column;
@@ -135,7 +144,7 @@
 
 			#filter-container {
 				margin-left: 0;
-				margin-top: 10px;
+				/* margin-top: 10px; */
 				align-items: center;
 			}
 
@@ -150,7 +159,7 @@
 	<!-- Bootstrap Navbar -->
 	<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
 		<div class="container-fluid">
-			<a class="navbar-brand" href="ria.html">Aveiro Space Week</a>
+			<a class="navbar-brand" href="ria.html">Community Mapping</a>
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
 				aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
@@ -174,24 +183,33 @@
 		<!-- Map container -->
 		<div id="map"></div>
 
-		<!-- Filter button container -->
+		<!-- Filter and Info Card container -->
 		<div id="filter-container">
+			<!-- Filter button -->
 			<div class="prop">
 				<div class="btn-group">
 					<button type="button" class="btn btn-primary text-white dropdown-toggle" data-bs-toggle="dropdown"
 						aria-haspopup="true" aria-expanded="false">
-						Select Filter
+						Select Indice
 					</button>
 					<div class="dropdown-menu">
 						<a class="dropdown-item" href="#" onclick="updateProp('NDVI')">NDVI</a>
 						<a class="dropdown-item" href="#" onclick="updateProp('NDWI')">NDWI</a>
-						<a class="dropdown-item" href="#" onclick="updateProp('NDSI')">NDSI</a> <!-- New Index -->
-						<a class="dropdown-item" href="#" onclick="updateProp('SI9')">SI9</a>   <!-- New Index -->
+						<a class="dropdown-item" href="#" onclick="updateProp('NDSI')">NDSI</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('SI9')">SI9</a>
 					</div>
 				</div>
-			</div>			
+			</div>
+
+			<!-- Info Card -->
+			<div id="info-card" class="info-card">
+				<h4 id="index-title">Index Information</h4>
+				<p id="index-description">Select an index from the dropdown to see more information here.</p>
+			</div>
 		</div>
 	</div>
+
+
 
 	<script type="text/javascript">
 		var geojson;
@@ -223,7 +241,7 @@
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		}).addTo(map);
 
-		// control that shows state info on hover
+		// Control that shows state info on hover
 		const info = L.control();
 
 		info.onAdd = function (map) {
@@ -233,20 +251,20 @@
 		};
 
 		info.update = function (props) {
-			const contents = props ? `<b>${props.localId}</b><br />${propToDisplay}: ${props[propToDisplay].toFixed(4)}` : 'Hover over a canal';
+			const contents = props ? `<b>${props.Id}</b><br />${propToDisplay}: ${props[propToDisplay].toFixed(4)}` : 'Hover over a canal';
 			this._div.innerHTML = `<h4>${propToDisplay}</h4>${contents}`;
 		};
 
 		info.addTo(map);
 
-		// get color depending on the value
+		// Get color depending on the value
 		function getColor(d) {
-			return d > 0.2 ? '#FCE51E' :
-				d > 0.1 ? '#49BE54' :
-					d > 0.05 ? '#209473' :
-						d > 0.03 ? '#22687B' :
-							d > 0.02 ? '#2D3E78' :
-								d > 0.01 ? '#37125E' : '#1C161E';
+			return d > 0.7 ? '#FCE51E' :
+				d > 0.6 ? '#49BE54' :
+					d > 0.5 ? '#209473' :
+						d > 0.3 ? '#22687B' :
+							d > 0.2 ? '#2D3E78' :
+								d > 0.1 ? '#37125E' : '#1C161E';
 		}
 
 		function style(feature) {
@@ -290,10 +308,10 @@
 
 			legend.onAdd = function (map) {
 				const div = L.DomUtil.create('div', 'info legend'),
-					grades = [0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2],
+					grades = [0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7],
 					labels = [];
 
-				// loop through our density intervals and generate a label with a colored square for each interval
+				// Loop through our density intervals and generate a label with a colored square for each interval
 				for (let i = 0; i < grades.length; i++) {
 					div.innerHTML +=
 						'<i style="background:' + getColor(grades[i] + 0.01) + '"></i> ' +
@@ -314,7 +332,28 @@
 		function updateProp(property) {
 			propToDisplay = property;
 			geojson.setStyle(style);
+			updateInfoCard(property);
 		}
+
+		function updateInfoCard(property) {
+			const titles = {
+				'NDVI': 'Normalized Difference Vegetation Index (NDVI)',
+				'NDWI': 'Normalized Difference Water Index (NDWI)',
+				'NDSI': 'Normalized Difference Snow Index (NDSI)',
+				'SI9': 'Spectral Index 9 (SI9)'
+			};
+
+			const descriptions = {
+				'NDVI': 'NDVI is used to analyze vegetation health by comparing the difference between the near-infrared and visible red light reflected by plants.',
+				'NDWI': 'NDWI is used to highlight water bodies and assess changes in water content over time.',
+				'NDSI': 'NDSI helps in identifying snow and ice cover by contrasting the reflectance in visible and near-infrared bands.',
+				'SI9': 'SI9 is a composite index that incorporates multiple spectral bands to provide comprehensive land cover information.'
+			};
+
+			document.getElementById('index-title').textContent = titles[property];
+			document.getElementById('index-description').textContent = descriptions[property];
+		}
+
 	</script>
 
 	<!-- Bootstrap JS and Popper.js -->
