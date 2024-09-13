@@ -17,16 +17,13 @@
         }
 
         .container {
-            margin-top: 50px;
+            margin-top: 20px;
         }
 
         .text-overlay {
             background: rgba(255, 255, 255, 0.8);
             padding: 20px;
             border-radius: 8px;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 1s ease forwards;
         }
 
         h1, h2 {
@@ -37,9 +34,6 @@
         .team-member {
             text-align: center;
             margin-bottom: 20px;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 1s ease forwards;
         }
 
         .team-member img {
@@ -52,52 +46,6 @@
         .team-member h4 {
             margin-top: 10px;
             color: #fff;
-        }
-
-        @keyframes fadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Delay for each team member to create a cascading effect */
-        .team-member:nth-child(1) {
-            animation-delay: 0.2s;
-        }
-
-        .team-member:nth-child(2) {
-            animation-delay: 0.4s;
-        }
-
-        .team-member:nth-child(3) {
-            animation-delay: 0.6s;
-        }
-
-        .team-member:nth-child(4) {
-            animation-delay: 0.8s;
-        }
-
-        .team-member:nth-child(5) {
-            animation-delay: 1s;
-        }
-        .meet-the-team-title {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 1s ease forwards;
-            animation-delay: 0.1s;
-        }
-
-        .text-overlay-container {
-            width: 1200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
         }
     </style>
 </head>
@@ -124,30 +72,28 @@
         </div>
     </nav>
 
-    <div class="container text-overlay-container">
-        <div class="text-overlay">
-            <h1>About Our App</h1>
-            <p>The Baixo Vouga Lagunar, part of the Aveiro lagoon in Portugal, is a wetland region with rich biodiversity and significant agricultural activity. However, saline intrusion is degrading agricultural soils, leading to land abandonment and affecting the local economy.</p>
-            <p>Our web application uses satellite imagery to track and visualize the impact of salinity on agricultural land in the region. It is designed to support researchers, students, and especially local farmers in identifying high-risk areas and developing preventative measures to protect fertile soil.​</p>
-        </div>
+    <div class="container text-overlay">
+        <h1>About Our App</h1>
+        <p>The Baixo Vouga Lagunar, part of the Aveiro lagoon in Portugal, is a wetland region with rich biodiversity and significant agricultural activity. However, saline intrusion is degrading agricultural soils, leading to land abandonment and affecting the local economy.</p>
+        <p>Our web application uses satellite imagery to track and visualize the impact of salinity on agricultural land in the region. It is designed to support researchers, students, and especially local farmers in identifying high-risk areas and developing preventative measures to protect fertile soil.​</p>
     </div>
 
     <div class="container mt-5">
-        <h2 class="text-center text-white meet-the-team-title">Meet the Team</h2>
+        <h2 class="text-center text-white">Meet the Team</h2>
         <div class="row justify-content-center">
             <!-- Team Member 1 -->
             <div class="col-md-2 d-flex flex-column align-items-center team-member">
-                <img src="André.jpeg" alt="Team Member">
+                <img src="https://via.placeholder.com/100" alt="Team Member">
                 <h4 class="text-white">André Dora</h4>
             </div>
             <!-- Team Member 2 -->
             <div class="col-md-2 d-flex flex-column align-items-center team-member">
-                <img src="Rhania.jpeg" alt="Team Member">
+                <img src="https://via.placeholder.com/100" alt="Team Member">
                 <h4 class="text-white">Rhania Rolo</h4>
             </div>
             <!-- Team Member 3 -->
             <div class="col-md-2 d-flex flex-column align-items-center team-member">
-                <img src="Cecilia.jpeg" alt="Team Member">
+                <img src="https://via.placeholder.com/100" alt="Team Member">
                 <h4 class="text-white">Cecília Santos</h4>
             </div>
             <!-- Team Member 4 -->
@@ -157,7 +103,7 @@
             </div>
             <!-- Team Member 5 -->
             <div class="col-md-2 d-flex flex-column align-items-center team-member">
-                <img src="Raquel.jpeg" alt="Team Member">
+                <img src="https://via.placeholder.com/100" alt="Team Member">
                 <h4 class="text-white">Raquel Vinagre</h4>
             </div>
         </div>

@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 import openeo  # for processing/retrieving data from Copernicus
 import xarray  # for reading netCDF data
 import geopandas as gpd  # for working with shapefiles and GeoJSON
+import numpy as np
 
 from os.path import isfile
 
@@ -73,34 +74,50 @@ def get_datacube(
 
 
 def get_spectral_indices(ds, shapefile, reproject=True):
+    # Reproject the xarray dataset to EPSG:4326
     if reproject:
         ds = ds.rio.reproject("EPSG:4326")
 
-    # calculate indices
-    green, red, nir = "B03", "B04", "B08"
-    ds["NDWI"] = (ds[green] - ds[nir]) / (ds[green] + ds[nir]).rio.write_crs(
-        "EPSG:4326"
-    )
+    # Calculate indices
+    blue, green, red, nir = "B02", "B03", "B04", "B08"
+    
+    # Water content/stress (NDWI)
+    ds["NDWI"] = (ds[green] - ds[nir]) / (ds[green] + ds[nir]).rio.write_crs("EPSG:4326")
+
+    # Vegetation health (NDVI)
     ds["NDVI"] = (ds[nir] - ds[red]) / (ds[nir] + ds[red]).rio.write_crs("EPSG:4326")
 
-    # GeoDataFrame
+    # Salinity (NDSI)
+    ds["NDSI"] = (ds[red] - ds[nir]) / (ds[nir] + ds[red]).rio.write_crs("EPSG:4326")
+
+    # Custom index (SI9)
+    ds["SI9"] = np.sqrt(ds[green]*2 + ds[red]*2 + ds[nir]*2).rio.write_crs("EPSG:4326")
+
+    # Convert the xarray dataset to GeoDataFrame
     df = ds.to_dataframe().reset_index()
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y), crs="EPSG:4326")
-    gdf = gdf[["NDWI", "NDVI", "geometry"]].dropna()
+    gdf = gdf[["NDWI", "NDVI", "NDSI", "SI9", "geometry"]].dropna()
 
-    # read shapefile
+    # Read the shapefile and check the CRS
     geo = gpd.read_file(shapefile)
-    geo = geo[["localId", "geometry"]]
+    geo = geo[["ID", "geometry"]]
 
-    # aggregate indices per zones in shapefile
+    # Reproject the shapefile to match the CRS of gdf (which is EPSG:4326)
+    if geo.crs != gdf.crs:
+        geo = geo.to_crs(gdf.crs)
+
+    # Aggregate indices per zones in the shapefile
     indices = (
-        geo.sjoin(gdf, predicate="contains")[["localId", "NDVI", "NDWI"]]
-        .groupby("localId")
+        geo.sjoin(gdf, predicate="contains")[["ID", "NDVI", "NDWI", "NDSI", "SI9"]]
+        .groupby("ID")
         .agg("mean")
     )
-    indices = geo.join(indices, on="localId")
+
+    # Join the results back to the original shapefile GeoDataFrame
+    indices = geo.join(indices, on="ID")
 
     return indices.to_geo_dict()
+
 
 
 @app.get("/ria.json")
@@ -129,7 +146,8 @@ async def get_ndvi_nwdi():
 
     ds = xarray.load_dataset("data/eo_data.nc", decode_coords="all")
 
-    out = get_spectral_indices(ds, "RiaAveiro_WGS84/RiaAveiro_WGS84.shp")
+    out = get_spectral_indices(ds, "bvl/areaEstudo.shp")
+    #out = get_spectral_indices(ds, "RiaAveiro_WGS84/RiaAveiro_WGS84.shp")
 
     return out
 
