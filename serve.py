@@ -1,15 +1,13 @@
-from fastapi import FastAPI, Request
+# packages
+from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-
-
-import openeo  # for processing/retrieving data from Copernicus
-import xarray  # for reading netCDF data
-import geopandas as gpd  # for working with shapefiles and GeoJSON
+import openeo  
+import xarray  
+import geopandas as gpd 
 import numpy as np
-import json
-
+import xarray
 from os.path import isfile
 
 app = FastAPI()
@@ -28,7 +26,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 def get_datacube(
     collection,
@@ -101,31 +98,28 @@ def get_spectral_indices(ds, shapefile, reproject=True):
 
     # Read the shapefile and check the CRS
     geo = gpd.read_file(shapefile)
-    geo = geo[["Id", "geometry"]]
-
+    geo = geo[["FID", "geometry"]]
+    
     # Reproject the shapefile to match the CRS of gdf (which is EPSG:4326)
     if geo.crs != gdf.crs:
         geo = geo.to_crs(gdf.crs)
 
     # Aggregate indices per zones in the shapefile
     indices = (
-        geo.sjoin(gdf, predicate="contains")[["Id", "NDVI", "NDWI", "NDSI", "SI9"]]
-        .groupby("Id")
+        geo.sjoin(gdf, predicate="contains")[["FID", "NDVI", "NDWI", "NDSI", "SI9"]]
+        .groupby("FID")
         .agg("mean")
     )
 
-    print(indices)
     # Join the results back to the original shapefile GeoDataFrame
-    indices = geo.join(indices, on="Id")
-
+    indices = geo.join(indices, on="FID")
 
     return indices.to_geo_dict()
 
-
 @app.get("/ria.json")
-async def get_ndvi_nwdi():
+async def get_ndvi_nwdi(start_date: str = Query("2019-01-01"), end_date: str = Query("2019-01-31")):
     if not isfile("data/eo_data.nc"):
-        temporal_extent = ("2019-01-01", "2019-01-31")
+        temporal_extent = (start_date, end_date)
         spatial_extent = {
             "west": -8.84,
             "south": 40.43,
@@ -147,15 +141,10 @@ async def get_ndvi_nwdi():
         eo_cube.download("data/eo_data.nc")
 
     ds = xarray.load_dataset("data/eo_data.nc", decode_coords="all")
-
-    out = get_spectral_indices(ds, "areas/divisoes.shp")
-    #out = get_spectral_indices(ds, "RiaAveiro_WGS84/RiaAveiro_WGS84.shp")
-    print(out)
+    out = get_spectral_indices(ds, "new_shapes/new_shape1.shp")
     return out
 
-
 app.mount("/static", StaticFiles(directory="html"), name="static")
-
 
 @app.get("/")
 async def default():
