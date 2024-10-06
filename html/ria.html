@@ -193,10 +193,10 @@
 						Select Indice
 					</button>
 					<div class="dropdown-menu">
-						<a class="dropdown-item" href="#" onclick="updateProp('NDVI')">NDVI</a>
-						<a class="dropdown-item" href="#" onclick="updateProp('NDWI')">NDWI</a>
-						<a class="dropdown-item" href="#" onclick="updateProp('NDSI')">NDSI</a>
-						<a class="dropdown-item" href="#" onclick="updateProp('SI9')">SI9</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('NDVI')">Vegetation Health</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('NDWI')">Water Content</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('NDSI')">Salinity Risk</a>
+						<a class="dropdown-item" href="#" onclick="updateProp('SI9')">Salinity</a>
 					</div>
 				</div>
 			</div>
@@ -259,12 +259,18 @@
 
 		// Get color depending on the value
 		function getColor(d) {
-			return d > 0.7 ? '#FCE51E' :
-				d > 0.6 ? '#49BE54' :
-					d > 0.5 ? '#209473' :
-						d > 0.3 ? '#22687B' :
-							d > 0.2 ? '#2D3E78' :
-								d > 0.1 ? '#37125E' : '#1C161E';
+			return d > 0.7 ? '#FCE51E' :      // Light Yellow
+           d > 0.6 ? '#49BE54' :      // Green
+           d > 0.5 ? '#209473' :      // Dark Green
+           d > 0.3 ? '#22687B' :      // Teal
+           d > 0.2 ? '#2D3E78' :      // Blue
+           d > 0.1 ? '#37125E' :      // Dark Blue
+           d > 0.0 ? '#1C161E' :      // Almost Black
+           d > -0.1 ? '#9B1B29' :     // Light Red
+           d > -0.3 ? '#D95E66' :     // Medium Red
+           d > -0.5 ? '#FF7F50' :     // Dark Red
+           d > -0.7 ? '#FF4500' :     // Bright Red
+           '#FF0000';                 // Red (for values below -0.7)
 		}
 
 		function style(feature) {
@@ -308,7 +314,7 @@
 
 			legend.onAdd = function (map) {
 				const div = L.DomUtil.create('div', 'info legend'),
-					grades = [0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7],
+					grades = [-0.7, -0.5, -0.3, -0.1, 0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7],
 					labels = [];
 
 				// Loop through our density intervals and generate a label with a colored square for each interval
@@ -343,12 +349,13 @@
 				'SI9': 'Spectral Index 9 (SI9)'
 			};
 
+		
+
 			const descriptions = {
-				'NDVI': 'NDVI is used to analyze vegetation health by comparing the difference between the near-infrared and visible red light reflected by plants.',
-				'NDWI': 'NDWI is used to highlight water bodies and assess changes in water content over time.',
-				'NDSI': 'NDSI helps in identifying snow and ice cover by contrasting the reflectance in visible and near-infrared bands.',
-				'SI9': 'SI9 is a composite index that incorporates multiple spectral bands to provide comprehensive land cover information.'
-			};
+				'NDVI': 'NDVI is used to analyze vegetation health by comparing the difference between the near-infrared and visible red light reflected by plants. Higher values mean healthier vegetation.',
+				'NDWI': 'NDWI is used to highlight water bodies and assess changes in water content over time. Higher values typically indicate more water or moisture content.',
+				'NDSI': 'NDSI highlights areas that may be at risk of soil salinizationby contrasting the reflectance in visible and near-infrared bands.',
+				'SI9': 'SI9 helps detect salt accumulation in the soil'};
 
 			document.getElementById('index-title').textContent = titles[property];
 			document.getElementById('index-description').textContent = descriptions[property];
